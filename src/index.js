@@ -10,27 +10,39 @@ function Manipulate(props) {
 }
 
 class Note extends React.Component {
-    constructor(props) {
-        super(props);
-        this.trip_name = null;
-        this.owner = null;
-        this.number = "123123";
-        this.total_spend = 0;
-        this.record = [<li>172</li>, <li>412</li>, <li>312</li>];
-        this.members = [];
-        this.result = "asdjhksahkj";
-        this.each_spend = {
-        };
-        this.each_share = {
-        };
-
+    state = {
+        number: 0,
+        total_spend: 0,
+        members: [],
+        result: "qweqw",
+        record : [<li>172</li>, <li>412</li>, <li>312</li>],
+        each_spend : {},
+        each_share : {}
     }
-    add_member(name) {
-        this.number += 1;
-        this.members.push(name + " ")
-        this.each_spend[name] = 0;
-        this.each_share[name] = 0;
-        return;
+    
+
+
+    add_member = () => {
+        var new_each_spend = this.state.each_spend;
+        var new_each_share = this.state.each_share;
+        var new_members = this.state.members;
+        var input = document.getElementById("name").value;
+        if (this.state.members.includes(String(input))) {
+            alert(input + " already exists");
+            return;
+        }
+        new_members.push(String(input));
+        new_each_spend[String(input)] = 0;
+        new_each_share[String(input)] = 0;
+        this.setState({
+            number : this.state.number+1,
+            members : new_members,
+            each_spend : new_each_spend,
+            each_share : new_each_share, 
+        });
+        
+        var myJSON = JSON.stringify(this.state.members);
+        document.getElementById("member").innerHTML = "Member: " + myJSON;
     }
     
     add_spending(payer, sharer, amount) {
@@ -40,26 +52,15 @@ class Note extends React.Component {
     settle() {
         return;
     }
-
-    create_button(name) {
-        const func_name = {"addmember": this.add_member(),
-                           "spending": this.add_spending(),
-                           "result": this.settle()}
-        return (
-            <Manipulate
-                value = {name}
-                event = {() => }
-            />
-        )
-    }
     
     render() {
         return(
         <>
-        <input> qwe </input>
-        <div> Member: {this.members} </div>
-        <div> Final settle: {this.result}</div>
-        <div> spending record: {this.record} </div>
+        <input id="name"></input>
+        <button onClick= {this.add_member}>Add a new member</button>
+        <div id="member"> Member: {this.state.members} </div>
+        <div> Final settle: {this.state.result}</div>
+        <div> spending record: {this.state.record} </div>
         </>
         );
     }
@@ -68,7 +69,11 @@ class Note extends React.Component {
 class Platform extends React.Component {
     render() {
         
-        return(<div>Here is Platform</div> );
+        return(
+        <>    
+        <div>Here is Platform</div> 
+        </>
+        );
     }
   }
   
@@ -84,10 +89,12 @@ class Result extends React.Component {
     }
 }
   
-ReactDOM.render( <Platform /> , document.getElementById('platform'));
-ReactDOM.render( <History /> , document.getElementById('history'));
-ReactDOM.render( <Result /> , document.getElementById('result'));
+// ReactDOM.render( <Platform /> , document.getElementById('platform'));
+// ReactDOM.render( <History /> , document.getElementById('history'));
+// ReactDOM.render( <Result /> , document.getElementById('result'));
 ReactDOM.render( <Note /> , document.getElementById('note'));
+
+
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
