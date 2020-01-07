@@ -64,6 +64,7 @@ class Note extends React.Component {
         var amount = document.getElementById("amount").value;
         if (amount<=0){
             alert("The amount can't be equal or less than zero.")
+            return;
         }
         var sharer = []
         var i = 0
