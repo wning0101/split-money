@@ -15,7 +15,7 @@ class Note extends React.Component {
         total_spend: 0,
         members: [],
         result: "qweqw",
-        record : [<li>172</li>, <li>412</li>, <li>312</li>],
+        record : [],
         each_spend : {},
         each_share : {}
     }
@@ -58,23 +58,42 @@ class Note extends React.Component {
         }
 
     }
-    
-    add_spending() {
+    // Don't use add_spending()
+    add_spending = () => {
         var pay = String(document.getElementById("payer").value);
-        var amount = document.getElementById("amount");
+        var amount = document.getElementById("amount").value;
         var sharer = []
         var i = 0
         for (i=0;i<this.state.members.length;i++){
-            if (document.getElementById(String(this.state.members[i]).checked == true)){
-                share.push(this.state.members[i]);
+            if (document.getElementById(String(this.state.members[i])).checked == true){
+                sharer.push(this.state.members[i]);
             }
         }
-        
+        var share_number = sharer.length;
+        if (share_number == 0){
+            alert("There's no sharer.")
+            return;
+        }
+        var cur_share = this.state.each_share;
+        var cur_spend = this.state.each_spend;
+        cur_spend[pay] += amount;
+        for (i=0;i<share_number;i++){
+            cur_share[sharer[i]] += amount/share_number;
+        }
+        var cur_record = this.state.record;
+        var myJSON = JSON.stringify(sharer);
+        cur_record.push("<li>" + pay + " paid $" + String(amount) + " for " + myJSON + "</li>")
         this.setState({
-            total_spend : this.state.total_spend + amount
+            total_spend : this.state.total_spend + amount,
+            each_share : cur_share,
+            each_spend : cur_spend,
+            record : cur_record
         })
+        document.getElementById("record").innerHTML = "spending record: "
+        for(i=0;i<this.state.record.length;i++){
+            document.getElementById("record").innerHTML += this.state.record[i];
+        }
 
-        
         return;
     }
 
@@ -110,7 +129,7 @@ class Note extends React.Component {
         </div>
         <br/>
         <div id="member"> Member: {this.state.members} </div>
-        <div> spending record: {this.state.record} </div>
+        <div id="record"> spending record: {this.state.record} </div>
         <div> Final settle: {this.state.result}</div>
         </>
         );
