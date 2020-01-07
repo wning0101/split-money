@@ -26,14 +26,18 @@ class Note extends React.Component {
         var new_each_spend = this.state.each_spend;
         var new_each_share = this.state.each_share;
         var new_members = this.state.members;
-        var input = document.getElementById("name").value;
-        if (this.state.members.includes(String(input))) {
+        var input = String(document.getElementById("name").value);
+        if (input == "") {
+            alert("Please don't enter empty name")
+            return;
+        }
+        if (this.state.members.includes(input)) {
             alert(input + " already exists");
             return;
         }
-        new_members.push(String(input));
-        new_each_spend[String(input)] = 0;
-        new_each_share[String(input)] = 0;
+        new_members.push(input);
+        new_each_spend[input] = 0;
+        new_each_share[input] = 0;
         this.setState({
             number : this.state.number+1,
             members : new_members,
@@ -43,9 +47,34 @@ class Note extends React.Component {
         
         var myJSON = JSON.stringify(this.state.members);
         document.getElementById("member").innerHTML = "Member: " + myJSON;
+        document.getElementById("sharer").innerHTML = "";
+        document.getElementById("payer").innerHTML = "";
+        var i = 0
+        for (i=0; i<this.state.members.length;i++) {
+            document.getElementById("payer").innerHTML += "<option value='" + this.state.members[i] + "'>" + this.state.members[i] + "</option>";
+        }
+        for (i=0; i<this.state.members.length;i++) {
+            document.getElementById("sharer").innerHTML += "<input id='" + this.state.members[i] + "' type='checkbox'/>" + this.state.members[i] + "<br/>";
+        }
+
     }
     
-    add_spending(payer, sharer, amount) {
+    add_spending() {
+        var pay = String(document.getElementById("payer").value);
+        var amount = document.getElementById("amount");
+        var sharer = []
+        var i = 0
+        for (i=0;i<this.state.members.length;i++){
+            if (document.getElementById(String(this.state.members[i]).checked == true)){
+                share.push(this.state.members[i]);
+            }
+        }
+        
+        this.setState({
+            total_spend : this.state.total_spend + amount
+        })
+
+        
         return;
     }
 
@@ -56,11 +85,33 @@ class Note extends React.Component {
     render() {
         return(
         <>
+        <a>Add a new member: </a>
         <input id="name"></input>
-        <button onClick= {this.add_member}>Add a new member</button>
+        <button onClick= {this.add_member}>Add</button><br/>
+        <a>Add a new spending</a> <br/>
+        <div class="spending">
+        <a>Payer: </a>
+        <select id="payer">
+            {/* <option value="volvo">Volvo</option>
+            <option value="saab">Saab</option>
+            <option value="vw">VW</option>
+            <option value="audi" selected>Audi</option> */}
+        </select> <br/>  
+        <a>Sharer: </a>
+        <div id="sharer">
+            {/* <input type="checkbox" value="Bike"/> I have a bike<br/>
+            <input type="checkbox" value="Car"/> I have a car<br/>
+            <input type="checkbox" value="Boat"/> I have a boat<br/> */}
+        </div>
+        <a>Amount: </a>
+        <input id="amount"></input>
+        <br/>
+        <button onClick= {this.add_spending}>Add</button><br/>
+        </div>
+        <br/>
         <div id="member"> Member: {this.state.members} </div>
-        <div> Final settle: {this.state.result}</div>
         <div> spending record: {this.state.record} </div>
+        <div> Final settle: {this.state.result}</div>
         </>
         );
     }
