@@ -62,6 +62,9 @@ class Note extends React.Component {
     add_spending = () => {
         var pay = String(document.getElementById("payer").value);
         var amount = document.getElementById("amount").value;
+        if (amount<=0){
+            alert("The amount can't be equal or less than zero.")
+        }
         var sharer = []
         var i = 0
         for (i=0;i<this.state.members.length;i++){
