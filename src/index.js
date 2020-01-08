@@ -184,6 +184,7 @@ class Note extends React.Component {
         return;
     }
     
+    // build the html
     render() {
         return(
         <>
