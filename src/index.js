@@ -36,8 +36,8 @@ class Note extends React.Component {
             return;
         }
         new_members.push(input);
-        new_each_spend[input] = 0;
-        new_each_share[input] = 0;
+        new_each_spend[input] = Number(0);
+        new_each_share[input] = Number(0);
         this.setState({
             number : this.state.number+1,
             members : new_members,
@@ -46,10 +46,15 @@ class Note extends React.Component {
         });
         
         var myJSON = JSON.stringify(this.state.members);
-        document.getElementById("member").innerHTML = "Member: " + myJSON;
+        var i = 0
+        var balance = 0;
+        document.getElementById("member").innerHTML = "Member: <br>";
+        for (i=0; i<this.state.members.length;i++){
+            balance = this.state.each_spend[this.state.members[i]] - this.state.each_share[this.state.members[i]];
+            document.getElementById("member").innerHTML += "<li>" + this.state.members[i] + " : " + String(balance) + "</li>";
+        }
         document.getElementById("sharer").innerHTML = "";
         document.getElementById("payer").innerHTML = "";
-        var i = 0
         for (i=0; i<this.state.members.length;i++) {
             document.getElementById("payer").innerHTML += "<option value='" + this.state.members[i] + "'>" + this.state.members[i] + "</option>";
         }
@@ -80,7 +85,7 @@ class Note extends React.Component {
         }
         var cur_share = this.state.each_share;
         var cur_spend = this.state.each_spend;
-        cur_spend[pay] += amount;
+        cur_spend[pay] = Number(cur_spend[pay]) + Number(amount);
         for (i=0;i<share_number;i++){
             cur_share[sharer[i]] += amount/share_number;
         }
@@ -97,11 +102,13 @@ class Note extends React.Component {
         for(i=0;i<this.state.record.length;i++){
             document.getElementById("record").innerHTML += this.state.record[i];
         }
-        this.settle();
-        document.getElementById("result").innerHTML = "Final settle: <br>"
-        for(i=0;i<this.state.result.length;i++){
-            document.getElementById("result").innerHTML += "<li>" + this.state.result[i] + "</li>";
+        var balance = 0;
+        document.getElementById("member").innerHTML = "Member: <br>";
+        for (i=0; i<this.state.members.length;i++){
+            balance = this.state.each_spend[this.state.members[i]] - this.state.each_share[this.state.members[i]];
+            document.getElementById("member").innerHTML += "<li>" + this.state.members[i] + " : " + String(balance) + "</li>";
         }
+        this.settle();
 
         return;
     }
@@ -137,13 +144,13 @@ class Note extends React.Component {
         }
         pos = pos.sort(compare);
         neg = neg.sort(compare2);
-        var temp = 0;
+        var temp = [];
         while(pos.length > 0 && neg.length > 0 ){
             var transfer = pos[0][0] + neg[0][0];
             if (transfer>0){
-                record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(neg[0][0]) + " dollars.");
+                record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(-neg[0][0]) + " dollars.");
                 pos[0][0] += neg[0][0];
-                temp = pos[0][0];
+                temp = [pos[0][0], pos[0][1]];
                 pos.shift();
                 neg.shift();
                 pos.push(temp);
@@ -152,7 +159,7 @@ class Note extends React.Component {
             else if(transfer<0){
                 record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(pos[0][0]) + " dollars.");
                 neg[0][0] += pos[0][0];
-                temp = neg[0][0];
+                temp = [neg[0][0], neg[0][1]];
                 pos.shift();
                 neg.shift();
                 neg.push(temp);
@@ -168,6 +175,12 @@ class Note extends React.Component {
             result: record,
         })
 
+        document.getElementById("result").innerHTML = ""
+        document.getElementById("result").innerHTML = "Final settle: <br>"
+        for(i=0;i<record.length;i++){
+            document.getElementById("result").innerHTML += "<li>" + record[i] + "</li>";
+        }
+
         return;
     }
     
@@ -181,16 +194,9 @@ class Note extends React.Component {
         <div class="spending">
         <a>Payer: </a>
         <select id="payer">
-            {/* <option value="volvo">Volvo</option>
-            <option value="saab">Saab</option>
-            <option value="vw">VW</option>
-            <option value="audi" selected>Audi</option> */}
         </select> <br/>  
         <a>Sharer: </a>
         <div id="sharer">
-            {/* <input type="checkbox" value="Bike"/> I have a bike<br/>
-            <input type="checkbox" value="Car"/> I have a car<br/>
-            <input type="checkbox" value="Boat"/> I have a boat<br/> */}
         </div>
         <a>Amount: </a>
         <input id="amount"></input>
@@ -198,9 +204,9 @@ class Note extends React.Component {
         <button onClick= {this.add_spending}>Add</button><br/>
         </div>
         <br/>
-        <div id="member"> Member: {this.state.members} </div>
+        <div id="member"> Members: {this.state.members} </div>
         <div id="record"> spending record: {this.state.record} </div>
-        <div id="result"> Final settle: {this.state.result}</div>
+        <div id="result"></div>
         </>
         );
     }
