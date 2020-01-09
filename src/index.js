@@ -213,28 +213,28 @@ class Note extends React.Component {
     }
 }
 
-class Platform extends React.Component {
-    render() {
+// class Platform extends React.Component {
+//     render() {
         
-        return(
-        <>    
-        <div>Here is Platform</div> 
-        </>
-        );
-    }
-  }
+//         return(
+//         <>    
+//         <div>Here is Platform</div> 
+//         </>
+//         );
+//     }
+//   }
   
-class History extends React.Component {
-    render() {
-        return(<div>Here is History</div> );
-    }
-}
+// class History extends React.Component {
+//     render() {
+//         return(<div>Here is History</div> );
+//     }
+// }
 
-class Result extends React.Component {
-    render() {
-        return(<div>Here is Result</div> );
-    }
-}
+// class Result extends React.Component {
+//     render() {
+//         return(<div>Here is Result</div> );
+//     }
+// }
   
 // ReactDOM.render( <Platform /> , document.getElementById('platform'));
 // ReactDOM.render( <History /> , document.getElementById('history'));
