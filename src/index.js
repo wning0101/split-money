@@ -1,6 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import Member from './member'
+import Spend from './spend'
+import Payer from './payer'
+import Sharer from './sharer'
+import Settle from './settle'
 // import * as serviceWorker from './serviceWorker';
 
 function Manipulate(props) {
@@ -10,17 +15,22 @@ function Manipulate(props) {
 }
 
 class Note extends React.Component {
-    state = {
-        number: 0,
-        total_spend: 0,
-        members: [],
-        result: [],
-        record : [],
-        each_spend : {},
-        each_share : {},
+    constructor(){
+        super()
+        this.state = {
+            number: 0,
+            total_spend: 0,
+            members: [],
+            result: [],
+            record : [],
+            each_spend : {},
+            each_share : {},
+        }
+        this.add_member = this.add_member.bind(this)
+        this.add_spending = this.add_spending.bind(this)
+        this.settle = this.settle.bind(this)
     }
     
-
 
     add_member = () => {
         var new_each_spend = this.state.each_spend;
@@ -44,24 +54,6 @@ class Note extends React.Component {
             each_spend : new_each_spend,
             each_share : new_each_share, 
         });
-        
-        var myJSON = JSON.stringify(this.state.members);
-        var i = 0
-        var balance = 0;
-        document.getElementById("member").innerHTML = "Member: <br>";
-        for (i=0; i<this.state.members.length;i++){
-            balance = this.state.each_spend[this.state.members[i]] - this.state.each_share[this.state.members[i]];
-            document.getElementById("member").innerHTML += "<li>" + this.state.members[i] + " : " + String(balance) + "</li>";
-        }
-        document.getElementById("sharer").innerHTML = "";
-        document.getElementById("payer").innerHTML = "";
-        for (i=0; i<this.state.members.length;i++) {
-            document.getElementById("payer").innerHTML += "<option value='" + this.state.members[i] + "'>" + this.state.members[i] + "</option>";
-        }
-        for (i=0; i<this.state.members.length;i++) {
-            document.getElementById("sharer").innerHTML += "<input id='" + this.state.members[i] + "' type='checkbox'/>" + this.state.members[i] + "<br/>";
-        }
-
     }
     // Don't use add_spending()
     add_spending = () => {
@@ -90,24 +82,15 @@ class Note extends React.Component {
             cur_share[sharer[i]] += amount/share_number;
         }
         var cur_record = this.state.record;
-        var myJSON = JSON.stringify(sharer);
-        cur_record.push("<li>" + pay + " paid $" + String(amount) + " for " + myJSON + "</li>")
+        
+        cur_record.push([pay, amount, sharer])
         this.setState({
             total_spend : this.state.total_spend + amount,
             each_share : cur_share,
             each_spend : cur_spend,
             record : cur_record
         })
-        document.getElementById("record").innerHTML = "Spending record: "
-        for(i=0;i<this.state.record.length;i++){
-            document.getElementById("record").innerHTML += this.state.record[i];
-        }
-        var balance = 0;
-        document.getElementById("member").innerHTML = "Member: <br>";
-        for (i=0; i<this.state.members.length;i++){
-            balance = this.state.each_spend[this.state.members[i]] - this.state.each_share[this.state.members[i]];
-            document.getElementById("member").innerHTML += "<li>" + this.state.members[i] + " : " + String(balance) + "</li>";
-        }
+
         this.settle();
 
         return;
@@ -148,7 +131,8 @@ class Note extends React.Component {
         while(pos.length > 0 && neg.length > 0 ){
             var transfer = pos[0][0] + neg[0][0];
             if (transfer>0){
-                record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(-neg[0][0]) + " dollars.");
+                // record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(-neg[0][0]) + " dollars.");
+                record.push([neg[0][1], pos[0][1], -neg[0][0]]);
                 pos[0][0] += neg[0][0];
                 temp = [pos[0][0], pos[0][1]];
                 pos.shift();
@@ -157,7 +141,8 @@ class Note extends React.Component {
                 pos = pos.sort(compare)
             }
             else if(transfer<0){
-                record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(pos[0][0]) + " dollars.");
+                // record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(pos[0][0]) + " dollars.");
+                record.push([neg[0][1], pos[0][1], pos[0][0]]);
                 neg[0][0] += pos[0][0];
                 temp = [neg[0][0], neg[0][1]];
                 pos.shift();
@@ -166,7 +151,8 @@ class Note extends React.Component {
                 neg = neg.sort(compare2);
             }
             else{
-                record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(pos[0][0]) + " dollars.");
+                // record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(pos[0][0]) + " dollars.");
+                record.push([neg[0][1], pos[0][1], pos[0][0]]);
                 pos.shift();
                 neg.shift();
             }
@@ -174,18 +160,16 @@ class Note extends React.Component {
         this.setState({
             result: record,
         })
-
-        document.getElementById("result").innerHTML = ""
-        document.getElementById("result").innerHTML = "Final settle: <br>"
-        for(i=0;i<record.length;i++){
-            document.getElementById("result").innerHTML += "<li>" + record[i] + "</li>";
-        }
-
         return;
     }
     
     // build the html
     render() {
+        let Members = this.state.members.map(item => <Member key={item} name={item} balance={this.state.each_spend[item] - this.state.each_share[item]}/>)
+        let Spends = this.state.record.map(item => <Spend key={item} pay={item[0]} amount={item[1]} share={item[2]} />)
+        let Payers = this.state.members.map(item => <Payer key={item} name={item}/>)
+        let Sharers = this.state.members.map(item => <Sharer key={item} name={item}/>)
+        let Settles = this.state.result.map(item => <Settle key={item} give={item[0]} recieve={item[1]} amount={item[2]}/>)
         return(
         <>
         <a>Add a new member: </a>
@@ -195,9 +179,11 @@ class Note extends React.Component {
         <div class="spending">
         <a>Payer: </a>
         <select id="payer">
+            {Payers}
         </select> <br/>  
         <a>Sharer: </a>
         <div id="sharer">
+            {Sharers}
         </div>
         <a>Amount: </a>
         <input id="amount"></input>
@@ -205,44 +191,22 @@ class Note extends React.Component {
         <button onClick= {this.add_spending}>Add</button><br/>
         </div>
         <br/>
-        <div id="member"> Members: {this.state.members} </div>
-        <div id="record"> spending record: {this.state.record} </div>
-        <div id="result"></div>
+        <div> Members: </div>
+        <div> {Members} </div>
+        <div> Spending Record: </div>
+        <div> {Spends}</div>
+        <div> Final Settle: </div>
+        <div> {Settles}</div>
         </>
         );
     }
 }
 
-// class Platform extends React.Component {
-//     render() {
-        
-//         return(
-//         <>    
-//         <div>Here is Platform</div> 
-//         </>
-//         );
-//     }
-//   }
-  
-// class History extends React.Component {
-//     render() {
-//         return(<div>Here is History</div> );
-//     }
-// }
 
-// class Result extends React.Component {
-//     render() {
-//         return(<div>Here is Result</div> );
-//     }
-// }
-  
-// ReactDOM.render( <Platform /> , document.getElementById('platform'));
-// ReactDOM.render( <History /> , document.getElementById('history'));
-// ReactDOM.render( <Result /> , document.getElementById('result'));
 ReactDOM.render( <Note /> , document.getElementById('note'));
 
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
-// serviceWorker.unregister();
+// serviceWorker.unregister()
