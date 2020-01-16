@@ -32,6 +32,7 @@ class Note extends React.Component {
         this.add_member = this.add_member.bind(this)
         this.add_spending = this.add_spending.bind(this)
         this.settle = this.settle.bind(this)
+        this.displayTodos = this.displayTodos.bind(this)
     }
     
 
@@ -43,8 +44,8 @@ class Note extends React.Component {
             "mongodb-atlas"
         );
         this.db = mongodb.db("SP");
-        
         this.displayOnLoad();
+        // this.displayTodos();
     }
 
     displayOnLoad() {
@@ -56,26 +57,29 @@ class Note extends React.Component {
 
     displayTodos() {
         this.db
-          .collection("SP")
-          .find({}, { limit: 1000 })
-          .asArray()
-          .then(todos => {
-            this.setState({
-              todos
-            });
-          });
+            .collection("SP")
+            .findOne({owner_id: this.client.auth.user.id})
+            .then( result => { 
+                // var myJSON = JSON.stringify(result.data);
+                // alert(myJSON)
+                this.setState({
+                    owner: result.data.owner,
+                    password: result.data.password,
+                    number: result.data.number,
+                    total_spend: result.data.total_spend,
+                    members: result.data.members,
+                    result: result.data.result,
+                    record : result.data.record,
+                    each_spend : result.data.each_spend,
+                    each_share : result.data.each_share,
+                })
+                return result});
     }
-    addTodo() {
-        // var check = this.db.collection("SP").find({ owner_id: this.client.auth.user.id} )
-        
-        // this.db.collection("SP").findOne({owner_id: this.client.auth.user.id}, function(err, doc) {
-        //     console.log(doc)
-        // });
+    update_data() {
         this.db.collection("SP").updateOne(
             {owner_id: this.client.auth.user.id},
             {$set: {data: this.state} }
         )
-
         // if (!check) {
             // this.db
             // .collection("SP")
@@ -117,7 +121,7 @@ class Note extends React.Component {
             each_spend : new_each_spend,
             each_share : new_each_share, 
         });
-        this.addTodo()
+        this.update_data()
     }
     // Don't use add_spending()
     add_spending = () => {
@@ -156,7 +160,7 @@ class Note extends React.Component {
         })
 
         this.settle();
-        // this.addTodo()
+        this.update_data()
         return;
     }
 
