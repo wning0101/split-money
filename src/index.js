@@ -6,18 +6,21 @@ import Spend from './spend'
 import Payer from './payer'
 import Sharer from './sharer'
 import Settle from './settle'
+import {
+    Stitch,
+    UserPasswordCredential,
+    RemoteMongoClient
+  } from "mongodb-stitch-browser-sdk";
+
 // import * as serviceWorker from './serviceWorker';
 
-function Manipulate(props) {
-    return(
-        <button onClick={props.event}> {props.value} </button>
-    );
-}
 
 class Note extends React.Component {
     constructor(){
         super()
         this.state = {
+            owner: "willylin0607@gmail.com",
+            password: "1qaz2wsx",
             number: 0,
             total_spend: 0,
             members: [],
@@ -29,6 +32,66 @@ class Note extends React.Component {
         this.add_member = this.add_member.bind(this)
         this.add_spending = this.add_spending.bind(this)
         this.settle = this.settle.bind(this)
+    }
+    
+
+    componentDidMount() {
+        // Initialize the App Client
+        this.client = Stitch.initializeDefaultAppClient("split-money-filxi");
+        const mongodb = this.client.getServiceClient(
+            RemoteMongoClient.factory,
+            "mongodb-atlas"
+        );
+        this.db = mongodb.db("SP");
+        
+        this.displayOnLoad();
+    }
+
+    displayOnLoad() {
+        this.client.auth
+          .loginWithCredential(new UserPasswordCredential(this.state.owner, this.state.password))
+          .then(this.displayTodos)
+          .catch(console.error);
+    }
+
+    displayTodos() {
+        this.db
+          .collection("SP")
+          .find({}, { limit: 1000 })
+          .asArray()
+          .then(todos => {
+            this.setState({
+              todos
+            });
+          });
+    }
+    addTodo() {
+        // var check = this.db.collection("SP").find({ owner_id: this.client.auth.user.id} )
+        
+        // this.db.collection("SP").findOne({owner_id: this.client.auth.user.id}, function(err, doc) {
+        //     console.log(doc)
+        // });
+        this.db.collection("SP").updateOne(
+            {owner_id: this.client.auth.user.id},
+            {$set: {data: this.state} }
+        )
+
+        // if (!check) {
+            // this.db
+            // .collection("SP")
+            // .insertOne({
+            // owner_id: this.client.auth.user.id,
+            // data: [this.state]
+            // })
+            // .then();
+        // }
+        // else {
+        //     this.db.collection("SP").update(
+        //         {owner_id: this.client.auth.user.id},
+        //         { $set: { data: this.state } },
+        //         { multi: false }
+        //     )
+        // }
     }
     
 
@@ -54,6 +117,7 @@ class Note extends React.Component {
             each_spend : new_each_spend,
             each_share : new_each_share, 
         });
+        this.addTodo()
     }
     // Don't use add_spending()
     add_spending = () => {
@@ -92,7 +156,7 @@ class Note extends React.Component {
         })
 
         this.settle();
-
+        // this.addTodo()
         return;
     }
 
@@ -131,7 +195,6 @@ class Note extends React.Component {
         while(pos.length > 0 && neg.length > 0 ){
             var transfer = pos[0][0] + neg[0][0];
             if (transfer>0){
-                // record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(-neg[0][0]) + " dollars.");
                 record.push([neg[0][1], pos[0][1], -neg[0][0]]);
                 pos[0][0] += neg[0][0];
                 temp = [pos[0][0], pos[0][1]];
@@ -141,7 +204,6 @@ class Note extends React.Component {
                 pos = pos.sort(compare)
             }
             else if(transfer<0){
-                // record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(pos[0][0]) + " dollars.");
                 record.push([neg[0][1], pos[0][1], pos[0][0]]);
                 neg[0][0] += pos[0][0];
                 temp = [neg[0][0], neg[0][1]];
@@ -151,7 +213,6 @@ class Note extends React.Component {
                 neg = neg.sort(compare2);
             }
             else{
-                // record.push(neg[0][1] + " gives " + pos[0][1] + " " + String(pos[0][0]) + " dollars.");
                 record.push([neg[0][1], pos[0][1], pos[0][0]]);
                 pos.shift();
                 neg.shift();
@@ -172,31 +233,48 @@ class Note extends React.Component {
         let Settles = this.state.result.map(item => <Settle key={item} give={item[0]} recieve={item[1]} amount={item[2]}/>)
         return(
         <>
-        <a>Add a new member: </a>
-        <input id="name"></input>
-        <button onClick= {this.add_member}>Add</button><br/>
-        <a>Add a new spending</a> <br/>
-        <div class="spending">
-        <a>Payer: </a>
-        <select id="payer">
-            {Payers}
-        </select> <br/>  
-        <a>Sharer: </a>
-        <div id="sharer">
-            {Sharers}
-        </div>
-        <a>Amount: </a>
-        <input id="amount"></input>
-        <br/>
-        <button onClick= {this.add_spending}>Add</button><br/>
-        </div>
-        <br/>
-        <div> Members: </div>
-        <div> {Members} </div>
-        <div> Spending Record: </div>
-        <div> {Spends}</div>
-        <div> Final Settle: </div>
-        <div> {Settles}</div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <a>Add a new member: </a>
+                    <input id="name"></input>
+                    <button onClick= {this.add_member}>Add</button><br/>
+                </div>
+                <div class="col-sm-4">
+                    <a>Add a new spending</a>
+                    <br/>
+                    Subject: <br/>
+                    <input id="subject"></input> <br/>
+                    Payer: 
+                    <select id="payer">
+                        {Payers}
+                    </select> <br/>
+                </div>
+                <div class="col-sm-4">
+                    <a> </a><br/>
+                    Sharer: 
+                    <div id="sharer">
+                        {Sharers}
+                    </div>
+                    Amount: 
+                    <input id="amount"></input>
+                    <br/>
+                    <button onClick= {this.add_spending}>Add</button><br/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <a> Members: </a>
+                    <div> {Members} </div>
+                </div>
+                <div class="col-sm-4">
+                    <a> Spending Record: </a>
+                    <div> {Spends}</div>
+                </div>
+                <div class="col-sm-4">
+                    <a> Final Settle: </a>
+                    <div> {Settles}</div>
+                </div>
+            </div>
         </>
         );
     }

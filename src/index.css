@@ -25,6 +25,10 @@ p {font-size: 16px;}
   background-color: #2f2f2f; /* Black Gray */
   color: #fff;
 }
+.bg-5 {
+  background-color: #a8b4bb; /* Black Gray */
+  color: rgb(32, 30, 30);
+}
 .container-fluid {
   padding-top: 70px;
   padding-bottom: 70px;
