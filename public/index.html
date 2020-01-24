@@ -23,8 +23,8 @@
         </div>
         <div class="collapse navbar-collapse" id="myNavbar">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="app.html">New Note</a></li>
-            <li><a href="#">Retrieve Previous</a></li>
+            <li><a href="#note" onclick="register()">New Note</a></li>
+            <li><a href="#note" onclick="login()">Retrieve Previous</a></li>
             <li><a href="https://wning0101.github.io/index.html">My Portfolio</a></li>
           </ul>
         </div>
@@ -75,4 +75,12 @@
     </footer>
     </body>
 </html>
+<script>
+  function register() {
+    alert("Please enter your name, email and password to register.")
+  }
+  function login() {
+    alert("Please enter your email and password to retrieve your saved note.")
+  }
+</script>
 

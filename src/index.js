@@ -6,21 +6,24 @@ import Spend from './spend'
 import Payer from './payer'
 import Sharer from './sharer'
 import Settle from './settle'
+import Login from './login'
 import {
     Stitch,
     UserPasswordCredential,
     RemoteMongoClient
   } from "mongodb-stitch-browser-sdk";
+import Register from './register';
 
 // import * as serviceWorker from './serviceWorker';
-
-
+// "willylin0607@gmail.com"
+// "1qaz2wsx"
 class Note extends React.Component {
     constructor(){
         super()
         this.state = {
-            owner: "willylin0607@gmail.com",
-            password: "1qaz2wsx",
+            owner: "",
+            name: "",
+            password: "",
             number: 0,
             total_spend: 0,
             members: [],
@@ -33,13 +36,14 @@ class Note extends React.Component {
         this.add_spending = this.add_spending.bind(this)
         this.settle = this.settle.bind(this)
         this.displayTodos = this.displayTodos.bind(this)
+        this.help_login = this.help_login.bind(this)
     }
     
 
     componentDidMount() {
         // Initialize the App Client
         this.client = Stitch.initializeDefaultAppClient("split-money-filxi");
-        const mongodb = this.client.getServiceClient(
+        var mongodb = this.client.getServiceClient(
             RemoteMongoClient.factory,
             "mongodb-atlas"
         );
@@ -50,21 +54,25 @@ class Note extends React.Component {
 
     displayOnLoad() {
         this.client.auth
-          .loginWithCredential(new UserPasswordCredential(this.state.owner, this.state.password))
-          .then(this.displayTodos)
+          .loginWithCredential(new UserPasswordCredential("willylin0607@gmail.com", "1qaz2wsx"))
+          .then()
           .catch(console.error);
     }
 
-    displayTodos() {
+    displayTodos(login_name, login_pass) {
         this.db
             .collection("SP")
-            .findOne({owner_id: this.client.auth.user.id})
+            .findOne({owner_id: login_name, password: login_pass})
             .then( result => { 
                 // var myJSON = JSON.stringify(result.data);
-                // alert(myJSON)
+                if (result == null){
+                    alert("Invalid login. Please check your email and password.")
+                    return false;
+                }
                 this.setState({
                     owner: result.data.owner,
                     password: result.data.password,
+                    name: result.data.name,
                     number: result.data.number,
                     total_spend: result.data.total_spend,
                     members: result.data.members,
@@ -77,7 +85,8 @@ class Note extends React.Component {
     }
     update_data() {
         this.db.collection("SP").updateOne(
-            {owner_id: this.client.auth.user.id},
+            {owner_id: this.state.owner,
+             password: this.state.password},
             {$set: {data: this.state} }
         )
         // if (!check) {
@@ -96,6 +105,17 @@ class Note extends React.Component {
         //         { multi: false }
         //     )
         // }
+    }
+    add_data() {
+        this.db
+            .collection("SP")
+            .insertOne({
+            owner_id: document.getElementById("email_r").value,
+            password: document.getElementById("password_r").value,
+            name : document.getElementById("name_r").value,
+            data: [this.state]
+            })
+            .then();
     }
     
 
@@ -131,6 +151,11 @@ class Note extends React.Component {
             alert("The amount can't be equal or less than zero.")
             return;
         }
+        var subject = String(document.getElementById("subject").value);
+        if (subject == ""){
+            alert("Empty subject.")
+            return;
+        }
         var sharer = []
         var i = 0
         for (i=0;i<this.state.members.length;i++){
@@ -151,7 +176,7 @@ class Note extends React.Component {
         }
         var cur_record = this.state.record;
         
-        cur_record.push([pay, amount, sharer])
+        cur_record.push([pay, amount, sharer, subject])
         this.setState({
             total_spend : this.state.total_spend + amount,
             each_share : cur_share,
@@ -227,16 +252,79 @@ class Note extends React.Component {
         })
         return;
     }
-    
+    help_login = () => {
+        this.displayTodos(document.getElementById("email_l").value, document.getElementById("password_l").value);
+        
+            // alert("Invalid login. Please check your email and password.")
+    }
+
+    login(){
+        return <Login key={this.state.owner} email={this.state.owner} password={this.state.password} name={this.state.name}
+                login={this.help_login}
+                />
+    }
+
+    help_register = () => {
+        // this.add_data();
+        var check = false;
+        this.db
+            .collection("SP")
+            .findOne({owner_id: document.getElementById("email_r").value})
+            .then( result => { 
+                if (result != null){
+                    alert("This email is already registered.")
+                }
+                else{
+                    this.db
+                    .collection("SP")
+                    .insertOne({
+                    owner_id: document.getElementById("email_r").value,
+                    password: document.getElementById("password_r").value,
+                    name : document.getElementById("name_r").value,
+                    data: {
+                        owner: document.getElementById("email_r").value,
+                        name: document.getElementById("name_r").value,
+                        password: document.getElementById("password_r").value,
+                        number: 0,
+                        total_spend: 0,
+                        members: [],
+                        result: [],
+                        record : [],
+                        each_spend : {},
+                        each_share : {},
+                    }
+                    })
+                    .then();
+                    alert("Register Successfully.")
+                }
+            });
+    }
+
+    register(){
+        return <Register key={this.state.owner} email={this.state.owner} password={this.state.password}
+                register={this.help_register}
+                />
+    }
+
     // build the html
     render() {
         let Members = this.state.members.map(item => <Member key={item} name={item} balance={this.state.each_spend[item] - this.state.each_share[item]}/>)
-        let Spends = this.state.record.map(item => <Spend key={item} pay={item[0]} amount={item[1]} share={item[2]} />)
+        let Spends = this.state.record.map(item => <Spend key={item} pay={item[0]} amount={item[1]} share={item[2]} sub={item[3]} />)
         let Payers = this.state.members.map(item => <Payer key={item} name={item}/>)
         let Sharers = this.state.members.map(item => <Sharer key={item} name={item}/>)
         let Settles = this.state.result.map(item => <Settle key={item} give={item[0]} recieve={item[1]} amount={item[2]}/>)
+        let Login = this.login()
+        let Register = this.register()
         return(
         <>
+            <div class="row">
+                <div class="col-sm-6">
+                    {Login}
+                </div>
+                <div class="col-sm-6">
+                    {Register}
+                </div>
+            </div>
             <div class="row">
                 <div class="col-sm-4">
                     <a>Add a new member: </a>
