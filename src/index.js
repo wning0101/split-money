@@ -13,10 +13,10 @@ import {
     RemoteMongoClient
   } from "mongodb-stitch-browser-sdk";
 import Register from './register';
+import sha256 from 'js-sha256';
 
 // import * as serviceWorker from './serviceWorker';
-// "willylin0607@gmail.com"
-// "1qaz2wsx"
+
 class Note extends React.Component {
     constructor(){
         super()
@@ -48,28 +48,24 @@ class Note extends React.Component {
             "mongodb-atlas"
         );
         this.db = mongodb.db("SP");
-        this.displayOnLoad();
-        // this.displayTodos();
+        
     }
 
-    displayOnLoad() {
-        this.client.auth
-          .loginWithCredential(new UserPasswordCredential("willylin0607@gmail.com", "1qaz2wsx"))
-          .then()
-          .catch(console.error);
-    }
-
+ 
     displayTodos(login_name, login_pass) {
+        var hash = sha256.create();
+        hash.update(login_pass + "$@^%$qwd");
         this.db
             .collection("SP")
-            .findOne({owner_id: login_name, password: login_pass})
-            .then( result => { 
+            .findOne({owner_id: login_name, password: hash.hex()})
+            .then( result => {
                 // var myJSON = JSON.stringify(result.data);
                 if (result == null){
                     alert("Invalid login. Please check your email and password.")
                     return false;
                 }
                 this.setState({
+                    
                     owner: result.data.owner,
                     password: result.data.password,
                     name: result.data.name,
@@ -89,22 +85,6 @@ class Note extends React.Component {
              password: this.state.password},
             {$set: {data: this.state} }
         )
-        // if (!check) {
-            // this.db
-            // .collection("SP")
-            // .insertOne({
-            // owner_id: this.client.auth.user.id,
-            // data: [this.state]
-            // })
-            // .then();
-        // }
-        // else {
-        //     this.db.collection("SP").update(
-        //         {owner_id: this.client.auth.user.id},
-        //         { $set: { data: this.state } },
-        //         { multi: false }
-        //     )
-        // }
     }
     add_data() {
         this.db
@@ -267,6 +247,9 @@ class Note extends React.Component {
     help_register = () => {
         // this.add_data();
         var check = false;
+        var hash = sha256.create();
+        hash.update(document.getElementById("password_r").value + "$@^%$qwd");
+        // hash.hex();
         this.db
             .collection("SP")
             .findOne({owner_id: document.getElementById("email_r").value})
@@ -279,12 +262,12 @@ class Note extends React.Component {
                     .collection("SP")
                     .insertOne({
                     owner_id: document.getElementById("email_r").value,
-                    password: document.getElementById("password_r").value,
+                    password: hash.hex(),
                     name : document.getElementById("name_r").value,
                     data: {
                         owner: document.getElementById("email_r").value,
                         name: document.getElementById("name_r").value,
-                        password: document.getElementById("password_r").value,
+                        password: hash.hex(),
                         number: 0,
                         total_spend: 0,
                         members: [],
